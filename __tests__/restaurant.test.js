@@ -4,6 +4,25 @@ const request = require('supertest');
 const app = require('../lib/app');
 const UserService = require('../lib/services/UserService');
 
+const mockUser = {
+  firstName: 'Test',
+  lastName: 'User',
+  email: 'test@example.com',
+  password: '12345',
+};
+
+const registerAndLogin = async (userProps = {}) => {
+  const password = userProps.password ?? mockUser.password;
+
+  const agent = request.agent(app);
+
+  const user = await UserService.create({ ...mockUser, ...userProps });
+
+  const { email } = user;
+  await agent.post('/api/v1/users/sessions').send({ email, password });
+  return [agent, user];
+};
+
 describe('restaurant routes', () => {
   beforeEach(() => {
     return setup(pool);
@@ -49,6 +68,57 @@ describe('restaurant routes', () => {
           "website": "https://saltandstraw.com/pages/nw-23",
         },
       ]
+    `);
+  });
+
+  it('GET api/v1/restaurants/:id returns a single restaurant with nested comments', async () => {
+    const res = await request(app).get('/api/v1/restaurants/1');
+    // expect(res.status).toBe(200);
+    expect(res.body).toMatchInlineSnapshot(`
+      Object {
+        "cost": 1,
+        "cuisine": "American",
+        "id": "1",
+        "image": "https://media-cdn.tripadvisor.com/media/photo-o/05/dd/53/67/an-assortment-of-donuts.jpg",
+        "name": "Pip's Original",
+        "reviews": Array [
+          Object {
+            "detail": "Best restaurant ever!",
+            "id": "1",
+            "stars": 5,
+            "user_id": "1",
+          },
+          Object {
+            "detail": "Terrible service :(",
+            "id": "2",
+            "stars": 1,
+            "user_id": "2",
+          },
+          Object {
+            "detail": "It was fine.",
+            "id": "3",
+            "stars": 4,
+            "user_id": "3",
+          },
+        ],
+        "website": "http://www.PipsOriginal.com",
+      }
+    `);
+  });
+
+  it('POST /api/v1/restaurants/:restId/reviews adds a new review to a restaurant', async () => {
+    const [agent] = await registerAndLogin();
+    const res = await agent
+      .post('/api/v1/restaurants/1/reviews')
+      .send({ stars: 6, detail: 'This place has a great bathroom!' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchInlineSnapshot(`
+      Object {
+        "detail": "This place has a great bathroom!",
+        "id": "4",
+        "stars": 6,
+        "user_id": null,
+      }
     `);
   });
 });

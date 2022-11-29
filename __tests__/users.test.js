@@ -104,4 +104,10 @@ describe('user routes', () => {
     const resp = await agent.delete('/api/v1/users/sessions');
     expect(resp.status).toBe(204);
   });
+
+  // it('#GET user with nested reviews', async () => {
+  //   const res = await request(app).get('/api/v1/users/1');
+  //   expect(res.status).toBe(200);
+  //   expect(res.body).toMatchInlineSnapshot();
+  // });
 });

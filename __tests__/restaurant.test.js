@@ -85,18 +85,21 @@ describe('restaurant routes', () => {
           Object {
             "detail": "Best restaurant ever!",
             "id": "1",
+            "restaurant_id": "1",
             "stars": 5,
             "user_id": "1",
           },
           Object {
             "detail": "Terrible service :(",
             "id": "2",
+            "restaurant_id": "1",
             "stars": 1,
             "user_id": "2",
           },
           Object {
             "detail": "It was fine.",
             "id": "3",
+            "restaurant_id": "1",
             "stars": 4,
             "user_id": "3",
           },
@@ -116,18 +119,25 @@ describe('restaurant routes', () => {
       Object {
         "detail": "This place has a great bathroom!",
         "id": "4",
+        "restaurant_id": "1",
         "stars": 6,
-        "user_id": null,
+        "user_id": "4",
       }
     `);
   });
 
   it('DELETE /api/v1/reviews/:id deletes a review', async () => {
     const [agent] = await registerAndLogin();
-    const res = await agent.delete('/api/v1/reviews/1');
+    await agent
+      .post('/api/v1/restaurants/4/reviews')
+      .send({ stars: 4, detail: 'nice plates?' });
+
+    const res = await agent
+      .delete('/api/v1/reviews/4')
+      .send({ message: 'review deletored' });
     expect(res.status).toBe(200);
 
-    const reviewres = await agent.get('/api/v1/reviews/1');
+    const reviewres = await agent.get('/api/v1/reviews/4');
     expect(reviewres.status).toBe(404);
   });
 });
